@@ -207,6 +207,24 @@ public class Preferences {
 	 */
 	public static final String GRADLE_ANNOTATION_PROCESSING_ENABLED = "java.import.gradle.annotationProcessing.enabled";
 	/**
+	 * Preference key for the project-relative path where annotation-processor-generated
+	 * sources are written for Gradle projects.
+	 */
+	public static final String GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR = "java.import.gradle.annotationProcessing.generatedSourcesDir";
+	/**
+	 * Default value for {@link #GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR}.
+	 */
+	public static final String GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR_DEFAULT = "bin/generated-sources/annotations";
+	/**
+	 * Preference key for the project-relative path where annotation-processor-generated
+	 * test sources are written for Gradle projects.
+	 */
+	public static final String GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR = "java.import.gradle.annotationProcessing.generatedTestSourcesDir";
+	/**
+	 * Default value for {@link #GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR}.
+	 */
+	public static final String GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR_DEFAULT = "bin/generated-test-sources/annotations";
+	/**
 	 * Preference key to enable/disable maven importer.
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
@@ -643,6 +661,8 @@ public class Preferences {
 	private String gradleJavaHome;
 	private String gradleUserHome;
 	private boolean gradleAnnotationProcessingEnabled;
+	private String gradleAnnotationProcessingGeneratedSourcesDir;
+	private String gradleAnnotationProcessingGeneratedTestSourcesDir;
 	private boolean importMavenEnabled;
 	private boolean mavenOffline;
 	private boolean mavenDisableTestClasspathFlag;
@@ -933,6 +953,8 @@ public class Preferences {
 		gradleJavaHome = null;
 		gradleUserHome = null;
 		gradleAnnotationProcessingEnabled = true;
+		gradleAnnotationProcessingGeneratedSourcesDir = GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR_DEFAULT;
+		gradleAnnotationProcessingGeneratedTestSourcesDir = GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR_DEFAULT;
 		importMavenEnabled = true;
 		mavenOffline = false;
 		mavenDisableTestClasspathFlag = false;
@@ -1102,6 +1124,8 @@ public class Preferences {
 		prefs.gradleJavaHome = this.gradleJavaHome;
 		prefs.gradleUserHome = this.gradleUserHome;
 		prefs.gradleAnnotationProcessingEnabled = this.gradleAnnotationProcessingEnabled;
+		prefs.gradleAnnotationProcessingGeneratedSourcesDir = this.gradleAnnotationProcessingGeneratedSourcesDir;
+		prefs.gradleAnnotationProcessingGeneratedTestSourcesDir = this.gradleAnnotationProcessingGeneratedTestSourcesDir;
 		prefs.importMavenEnabled = this.importMavenEnabled;
 		prefs.mavenOffline = this.mavenOffline;
 		prefs.mavenDisableTestClasspathFlag = this.mavenDisableTestClasspathFlag;
@@ -1315,6 +1339,16 @@ public class Preferences {
 		if (containsKey(configuration, GRADLE_ANNOTATION_PROCESSING_ENABLED)) {
 			boolean gradleAnnotationProcessingEnabled = getBoolean(configuration, GRADLE_ANNOTATION_PROCESSING_ENABLED, existing.gradleAnnotationProcessingEnabled);
 			prefs.setGradleAnnotationProcessingEnabled(gradleAnnotationProcessingEnabled);
+		}
+
+		if (containsKey(configuration, GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR)) {
+			String gradleAnnotationProcessingGeneratedSourcesDir = getString(configuration, GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR);
+			prefs.setGradleAnnotationProcessingGeneratedSourcesDir(gradleAnnotationProcessingGeneratedSourcesDir);
+		}
+
+		if (containsKey(configuration, GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR)) {
+			String gradleAnnotationProcessingGeneratedTestSourcesDir = getString(configuration, GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR);
+			prefs.setGradleAnnotationProcessingGeneratedTestSourcesDir(gradleAnnotationProcessingGeneratedTestSourcesDir);
 		}
 
 		if (containsKey(configuration, IMPORT_MAVEN_ENABLED)) {
@@ -2343,6 +2377,25 @@ public class Preferences {
 
 	public void setGradleAnnotationProcessingEnabled(boolean gradleAnnotationProcessingEnabled) {
 		this.gradleAnnotationProcessingEnabled = gradleAnnotationProcessingEnabled;
+	}
+
+	public String getGradleAnnotationProcessingGeneratedSourcesDir() {
+		// JVM -D flag wins over LSP config so dotfile-managed config.ini overrides per-editor settings.
+		String override = System.getProperty(GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR);
+		return override != null ? override : gradleAnnotationProcessingGeneratedSourcesDir;
+	}
+
+	public void setGradleAnnotationProcessingGeneratedSourcesDir(String gradleAnnotationProcessingGeneratedSourcesDir) {
+		this.gradleAnnotationProcessingGeneratedSourcesDir = gradleAnnotationProcessingGeneratedSourcesDir;
+	}
+
+	public String getGradleAnnotationProcessingGeneratedTestSourcesDir() {
+		String override = System.getProperty(GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR);
+		return override != null ? override : gradleAnnotationProcessingGeneratedTestSourcesDir;
+	}
+
+	public void setGradleAnnotationProcessingGeneratedTestSourcesDir(String gradleAnnotationProcessingGeneratedTestSourcesDir) {
+		this.gradleAnnotationProcessingGeneratedTestSourcesDir = gradleAnnotationProcessingGeneratedTestSourcesDir;
 	}
 
 	public String getFormatterUrl() {
