@@ -11,11 +11,13 @@
 # Marc Schreiber - initial API and implementation
 ###############################################################################
 import argparse
+import configparser
 from hashlib import sha1
 import os
 import platform
 import re
 import subprocess
+import sys
 from pathlib import Path
 import tempfile
 
@@ -79,6 +81,31 @@ def get_shared_config_path(jdtls_base_path):
 
 	return str(jdtls_base_path / config_dir)
 
+def load_config_system_properties():
+	"""Read [system-properties] from ~/.skagedal-tools/jdtls/config.ini.
+
+	Each key=value becomes a -Dkey=value JVM arg. Returns an empty list if
+	the file or section is absent, or if parsing fails (failures are logged
+	to stderr so LSP startup is never blocked by a malformed config).
+	"""
+	config_path = Path.home() / '.skagedal-tools' / 'jdtls' / 'config.ini'
+	if not config_path.is_file():
+		return []
+
+	parser = configparser.ConfigParser(interpolation=None)
+	# Java system property names are case-sensitive; preserve key casing.
+	parser.optionxform = str
+	try:
+		parser.read(config_path, encoding='utf-8')
+	except configparser.Error as e:
+		print(f"jdtls: failed to parse {config_path}: {e}", file=sys.stderr)
+		return []
+
+	if not parser.has_section('system-properties'):
+		return []
+
+	return [f"-D{key}={value}" for key, value in parser.items('system-properties')]
+
 def main(args):
 	cwd_name = os.path.basename(os.getcwd())
 
@@ -127,6 +154,7 @@ def main(args):
 			"--add-modules=ALL-SYSTEM",
 			"--add-opens", "java.base/java.util=ALL-UNNAMED",
 			"--add-opens", "java.base/java.lang=ALL-UNNAMED"] \
+			+ load_config_system_properties() \
 			+ known_args.jvm_arg \
 			+ ["-jar", jar_path,
 			"-data", known_args.data] \
