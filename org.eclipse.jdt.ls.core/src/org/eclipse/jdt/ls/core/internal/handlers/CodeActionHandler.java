@@ -372,7 +372,18 @@ public class CodeActionHandler {
 			}
 		}
 
-		if (!preferenceManager.getClientPreferences().isSupportedCodeActionKind(pk.getKind())) {
+		// Quick assists are exposed by jdtls under the custom LSP kind "quickassist",
+		// which most LSP clients (Zed, Neovim, ...) do not advertise in their
+		// codeActionLiteralSupport.valueSet — only vscode-java does. For clients
+		// that don't advertise it, remap to the standard "refactor.rewrite" so the
+		// actions still surface. See https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2177.
+		String effectiveKind = pk.getKind();
+		if (JavaCodeActionKind.QUICK_ASSIST.equals(effectiveKind)
+				&& !preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.QUICK_ASSIST)) {
+			effectiveKind = CodeActionKind.RefactorRewrite;
+		}
+
+		if (!preferenceManager.getClientPreferences().isSupportedCodeActionKind(effectiveKind)) {
 			return Optional.ofNullable(command != null ? Either.forLeft(command) : null);
 		}
 		boolean missingCommand = command == null;
@@ -389,7 +400,7 @@ public class CodeActionHandler {
 		}
 
 		CodeAction codeAction = new CodeAction(name);
-		codeAction.setKind(pk.getKind());
+		codeAction.setKind(effectiveKind);
 		if (!supportsResolve && edit != null) {
 			codeAction.setEdit(edit);
 		}
