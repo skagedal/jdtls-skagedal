@@ -3369,7 +3369,7 @@ public class Preferences {
 		StrLookup<String> workspaceResolver = new StrLookup<String>() {
 			@Override
 			public String lookup(String key) {
-				if (key == "workspace") {
+				if ("workspace".equals(key)) {
 					String prop = getRootPaths().iterator().next().toOSString();
 					return prop;
 				}
