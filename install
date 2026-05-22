@@ -2,7 +2,7 @@
 # Build this fork of eclipse.jdt.ls and symlink its launcher into ~/local/bin
 # so it shadows any system/homebrew-installed jdtls on $PATH.
 #
-# Usage: ./install.sh [--rebuild]
+# Usage: ./install [--rebuild]
 #
 #   --rebuild   Wipe the existing target/ directory before building.
 #
@@ -27,7 +27,7 @@ for arg in "$@"; do
 			exit 0
 			;;
 		*)
-			echo "install.sh: unknown argument: $arg" >&2
+			echo "install: unknown argument: $arg" >&2
 			exit 2
 			;;
 	esac
@@ -45,7 +45,7 @@ if [[ ! -x "$launcher" ]]; then
 fi
 
 if [[ ! -x "$launcher" ]]; then
-	echo "install.sh: build did not produce $launcher" >&2
+	echo "install: build did not produce $launcher" >&2
 	exit 1
 fi
 

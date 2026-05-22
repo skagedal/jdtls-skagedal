@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Pull in changes from the upstream eclipse.jdt.ls repository.
+#
+# Fetches from the "upstream" remote (eclipse-jdtls/eclipse.jdt.ls) and merges
+# upstream/main into the local main branch.
+#
+# Usage: ./update
+#
+# Requirements:
+#   * An "upstream" git remote pointing at the upstream repository
+#   * A clean working tree (no uncommitted changes)
+
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "$0")" && pwd)"
+cd "$repo_dir"
+
+case "${1:-}" in
+	-h|--help)
+		sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+		exit 0
+		;;
+	"") ;;
+	*)
+		echo "update: unknown argument: $1" >&2
+		exit 2
+		;;
+esac
+
+if ! git remote get-url upstream >/dev/null 2>&1; then
+	echo "update: no 'upstream' remote configured." >&2
+	echo "  Add it with: git remote add upstream git@github.com:eclipse-jdtls/eclipse.jdt.ls.git" >&2
+	exit 1
+fi
+
+if ! git diff-index --quiet HEAD --; then
+	echo "update: working tree has uncommitted changes; commit or stash them first." >&2
+	exit 1
+fi
+
+echo "==> Fetching from upstream"
+git fetch upstream
+
+echo "==> Switching to main"
+git checkout main
+
+echo "==> Merging upstream/main into main"
+git merge upstream/main
+
+echo
+echo "Done. Review the result and push when ready:  git push origin main"
