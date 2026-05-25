@@ -13,3 +13,5 @@ bin/
 maven-wrapper.jar
 *.iml
 .idea
+**/.gradle/
+**/.settings/org.eclipse.buildship.core.prefs
