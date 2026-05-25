@@ -2,9 +2,10 @@
 # Build this fork of eclipse.jdt.ls and symlink its launcher into ~/local/bin
 # so it shadows any system/homebrew-installed jdtls on $PATH.
 #
-# Usage: ./install [--rebuild]
+# Usage: ./install [--clean]
 #
-#   --rebuild   Wipe the existing target/ directory before building.
+#   --clean   Run `mvnw clean verify` instead of `mvnw verify`. Use when an
+#             incremental build produces a broken or incomplete repository.
 #
 # Requirements:
 #   * JAVA_HOME pointing at a JDK 21+ (or `java` on PATH with version >= 21)
@@ -18,30 +19,27 @@ launcher="$dist_dir/bin/jdtls"
 link_dir="$HOME/local/bin"
 link_path="$link_dir/jdtls"
 
-rebuild=0
-for arg in "$@"; do
-	case "$arg" in
-		--rebuild) rebuild=1 ;;
-		-h|--help)
-			sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
-			exit 0
-			;;
-		*)
-			echo "install: unknown argument: $arg" >&2
-			exit 2
-			;;
-	esac
-done
+clean=0
+case "${1:-}" in
+	--clean) clean=1 ;;
+	-h|--help)
+		sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+		exit 0
+		;;
+	"") ;;
+	*)
+		echo "install: unknown argument: $1" >&2
+		exit 2
+		;;
+esac
 
-if [[ $rebuild -eq 1 ]]; then
-	echo "==> Removing existing build at $repo_dir/org.eclipse.jdt.ls.product/target"
-	rm -rf "$repo_dir/org.eclipse.jdt.ls.product/target"
-fi
-
-if [[ ! -x "$launcher" ]]; then
-	echo "==> No existing build found. Running ./mvnw clean verify -DskipTests=true (this takes several minutes)..."
-	cd "$repo_dir"
+cd "$repo_dir"
+if [[ $clean -eq 1 ]]; then
+	echo "==> Building (./mvnw clean verify -DskipTests=true)..."
 	./mvnw clean verify -DskipTests=true
+else
+	echo "==> Building (./mvnw verify -DskipTests=true)..."
+	./mvnw verify -DskipTests=true
 fi
 
 if [[ ! -x "$launcher" ]]; then
