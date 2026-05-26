@@ -110,6 +110,10 @@ My goal is to get things working well under Zed. This section documents some iss
 
 - [Buildship](https://github.com/eclipse-buildship/buildship)
 
-## LSP general
+## LSP stuff
 
+- [LSP specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/)
+- [caffeine-ls](https://github.com/cubewhy/caffeine-ls), an early-stage Java LSP written in Rust.
 - [lsp-devtools](https://github.com/swyddfa/lsp-devtools)
+- [lsp-bridge](https://github.com/ciresnave/lsp-bridge)
+- [async-lsp](https://crates.io/crates/async-lsp)
