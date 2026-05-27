@@ -3364,9 +3364,10 @@ public class Preferences {
 	}
 
 	private String expandWorkspacePath(String path) {
-		if (path == null || rootPaths == null || rootPaths.isEmpty())
+		if (path == null || rootPaths == null || rootPaths.isEmpty()) {
 			return path;
-		StrLookup<String> workspaceResolver = new StrLookup<String>() {
+		}
+		StrLookup<String> workspaceResolver = new StrLookup<>() {
 			@Override
 			public String lookup(String key) {
 				if ("workspace".equals(key)) {
