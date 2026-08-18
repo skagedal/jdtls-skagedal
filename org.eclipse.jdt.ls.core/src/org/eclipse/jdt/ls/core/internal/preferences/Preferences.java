@@ -537,6 +537,8 @@ public class Preferences {
 
 	public static final String JAVA_EDIT_VALIDATE_ALL_OPEN_BUFFERS_ON_CHANGES = "java.edit.validateAllOpenBuffersOnChanges";
 	public static final String JAVA_DIAGNOSTIC_FILER = "java.diagnostic.filter";
+	// Specifies whether newly created top-level types (class/interface/enum/record) should be package-private instead of public.
+	public static final String JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE = "java.templates.preferPackagePrivateVisibility";
 	/**
 	 * The preferences for generating toString method.
 	 */
@@ -595,12 +597,14 @@ public class Preferences {
 	public static final String CHAIN_COMPLETION_KEY = "java.completion.chain.enabled";
 
 	/**
-	 * Preference key to set the scope value to use when searching java code. Allowed value are
+	 * Preference key to set the scope value to use when searching Java code. Allowed values are
 	 * <ul>
-	 * <li><code>main</code>			-	Scope for main code</li>
-	 * <li><code>all</code>				-	Scope for both test and main code</li>
+	 * <li><code>main</code> - Search main source code and libraries</li>
+	 * <li><code>all</code> - Search main and test source code and libraries</li>
+	 * <li><code>projectOnly</code> - Include main and test
+	 * source code and referenced projects, excluding application and system libraries</li>
 	 * </ul>
-	 * Any other unknown value will be treated as <code>all</code>.
+	 * Any unknown value will be treated as <code>all</code>.
 	 */
 	public static final String JAVA_SEARCH_SCOPE = "java.search.scope";
 
@@ -789,6 +793,7 @@ public class Preferences {
 	private boolean validateAllOpenBuffersOnChanges;
 	private boolean chainCompletionEnabled;
 	private List<String> diagnosticFilter;
+	private boolean preferPackagePrivateVisibility = false;
 	private SearchScope searchScope;
 	private boolean inlayHintsSuppressedWhenSameNameNumberedParameter;
 	private boolean referencesCodeLensIncludeFields;
@@ -870,15 +875,14 @@ public class Preferences {
 	}
 
 	public static enum SearchScope {
-		all, main;
+		all, main, projectOnly;
 
 		static SearchScope fromString(String value, SearchScope defaultScope) {
 			if (value != null) {
-				String val = value.toLowerCase();
-				try {
-					return valueOf(val);
-				} catch(Exception e) {
-					//fall back to default severity
+				for (SearchScope scope : values()) {
+					if (scope.name().equalsIgnoreCase(value)) {
+						return scope;
+					}
 				}
 			}
 			return defaultScope;
@@ -1979,6 +1983,11 @@ public class Preferences {
 		if (containsKey(configuration, JAVA_DIAGNOSTIC_FILER)) {
 			List<String> diagnosticFilter = getList(configuration, JAVA_DIAGNOSTIC_FILER, existing.diagnosticFilter);
 			prefs.setDiagnosticFilter(diagnosticFilter);
+		}
+
+		if (containsKey(configuration, JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE)) {
+			boolean preferPackagePrivate = getBoolean(configuration, JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE, existing.preferPackagePrivateVisibility);
+			prefs.setPreferPackagePrivateVisibility(preferPackagePrivate);
 		}
 
 		if (containsKey(configuration, JAVA_CONFIGURATION_ASSOCIATIONS)) {
@@ -3442,6 +3451,15 @@ public class Preferences {
 
 	public void setDiagnosticFilter(List<String> diagnosticFilter) {
 		this.diagnosticFilter = diagnosticFilter;
+	}
+
+	public boolean isPreferPackagePrivateVisibility() {
+		return preferPackagePrivateVisibility;
+	}
+
+	public Preferences setPreferPackagePrivateVisibility(boolean preferPackagePrivateVisibility) {
+		this.preferPackagePrivateVisibility = preferPackagePrivateVisibility;
+		return this;
 	}
 
 	public List<String> getFilesAssociations() {
