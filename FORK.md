@@ -27,6 +27,30 @@ See [commit](https://github.com/skagedal/jdtls-skagedal/commit/5701dd9cf6ccad9ce
 - [Commit](https://github.com/skagedal/jdtls-skagedal/commit/44bd2feb5081cc099e20806a130cd2351014d3a1)
 - [Report](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3749#discussion_r3292252456) (should probably make an issue)
 
+## Preserve Gradle's annotation processor path order
+
+- [Commit](https://github.com/skagedal/jdtls-skagedal/commit/e14cc89d406d72b180de76df8699e0c33e9442eb)
+- Reproducer and upstream issue draft: `~/code/reproducers/jdtls-apt-processor-init-skipped` (not filed yet)
+
+Annotation processors were collected into a `HashSet` before `.factorypath` was
+written, so ECJ discovered them in rehashed order rather than the order Gradle
+gives javac. That order matters: both compilers stop looking for processors once
+every annotation present has been claimed, so a processor that claims nothing —
+one that exists only to have `init()` called, to capture the
+`ProcessingEnvironment` for a non-processor collaborator to read — runs only if
+it precedes the processors doing the claiming.
+
+The visible symptom in Aira's Gradle projects, which pair MapStruct with
+`no.entur.mapstruct.spi:protobuf-spi-impl`: every `@Mapper` interface reported
+`ProcessingEnvOptionsHolder not initialized yet`, no `*MapperImpl` was generated
+in the editor at all, and `./gradlew` on the same sources built cleanly.
+
+Two parts — `init.gradle` keeps Gradle's order instead of rehashing it, and
+`GradleBuildSupport` feeds the jars in backwards, because `addExternalJar` adds
+to the *head* of the path (it shares `FactoryPath.internalAdd` with
+`addEntryToHead`, and `FactoryPath` stores `_path` in reverse of path order,
+which `getAllContainers()` undoes via a private `getReversed()`).
+
 # My configuration
 
 Given the above features, the following `~/.skagedal-tools/jdtls/config.ini` will make jdtls avoid putting any unwanted files in the project tree in Gradle projects, and instead put them in the `build/` directory (separated from other Gradle output)
