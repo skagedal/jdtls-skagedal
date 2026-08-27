@@ -239,7 +239,22 @@ public class GradleBuildSupport implements IBuildSupport {
 			}
 
 			IFactoryPath factoryPath = AptConfig.getDefaultFactoryPath(javaProject);
-			for(File processor : processors){
+			// The order of the .factorypath entries is the order the compiler
+			// discovers annotation processors in, and discovery stops as soon as
+			// every annotation present has been claimed. A processor that claims
+			// nothing — one that only wants init(), to capture the
+			// ProcessingEnvironment for a non-processor collaborator to read — is
+			// therefore reached only if it precedes the processors that do the
+			// claiming. So this has to end up in Gradle's order, which is the
+			// order javac would see.
+			//
+			// addExternalJar adds to the *head* of the path: it shares internalAdd
+			// with FactoryPath.addEntryToHead, and FactoryPath keeps _path in the
+			// reverse of path order, which getAllContainers() undoes with
+			// getReversed(). So feed them in backwards to land in Gradle's order.
+			List<File> ordered = new ArrayList<>(processors);
+			Collections.reverse(ordered);
+			for (File processor : ordered) {
 				factoryPath.addExternalJar(processor);
 			}
 

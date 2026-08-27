@@ -58,7 +58,16 @@ class GradleAnnotationProcessorPatchPlugin implements Plugin<Project> {
 					continue
 				}
 
-				Set<File> processors = new HashSet<>()
+				// LinkedHashSet, not HashSet: the iteration order of this set becomes
+				// the order of the .factorypath entries, which is the order the
+				// compiler discovers annotation processors in. Processor discovery
+				// stops as soon as every annotation present has been claimed, so a
+				// processor that claims nothing — one that only wants init() to
+				// capture the ProcessingEnvironment for a collaborator to read — is
+				// reached only if it sorts ahead of the processors doing the
+				// claiming. getAnnotationProcessorPath() is already in the order
+				// javac would see, so preserve it rather than rehashing it.
+				Set<File> processors = new LinkedHashSet<>()
 				List<String> compilerArgs = new LinkedList<>()
 				// Compiler args for test are ignored.
 				// Due to JDT does not differentiate the args between main and test.
