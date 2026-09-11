@@ -85,7 +85,7 @@ public class PreferenceManager {
 	private static Map<String, Template> templates = new LinkedHashMap<>();
 
 	public PreferenceManager() {
-		preferences = new Preferences();
+		preferences = SystemPropertyPreferences.applyTo(new Preferences());
 		preferencesChangeListeners = new ListenerList<>();
 		eclipsePrefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
 		initialize();

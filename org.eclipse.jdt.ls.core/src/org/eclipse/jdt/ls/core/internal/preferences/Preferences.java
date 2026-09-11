@@ -1305,6 +1305,7 @@ public class Preferences {
 		if (existing == null) {
 			throw new IllegalArgumentException("Existing preferences can not be null");
 		}
+		configuration = SystemPropertyPreferences.withOverrides(configuration);
 
 		// Start with a clone of existing preferences
 		Preferences prefs = existing.clone();
@@ -2494,9 +2495,7 @@ public class Preferences {
 	}
 
 	public String getGradleAnnotationProcessingGeneratedSourcesDir() {
-		// JVM -D flag wins over LSP config so dotfile-managed config.ini overrides per-editor settings.
-		String override = System.getProperty(GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR);
-		return override != null ? override : gradleAnnotationProcessingGeneratedSourcesDir;
+		return gradleAnnotationProcessingGeneratedSourcesDir;
 	}
 
 	public void setGradleAnnotationProcessingGeneratedSourcesDir(String gradleAnnotationProcessingGeneratedSourcesDir) {
@@ -2504,8 +2503,7 @@ public class Preferences {
 	}
 
 	public String getGradleAnnotationProcessingGeneratedTestSourcesDir() {
-		String override = System.getProperty(GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR);
-		return override != null ? override : gradleAnnotationProcessingGeneratedTestSourcesDir;
+		return gradleAnnotationProcessingGeneratedTestSourcesDir;
 	}
 
 	public void setGradleAnnotationProcessingGeneratedTestSourcesDir(String gradleAnnotationProcessingGeneratedTestSourcesDir) {

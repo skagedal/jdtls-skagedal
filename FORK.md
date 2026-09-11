@@ -16,6 +16,20 @@ See [commit](https://github.com/skagedal/jdtls-skagedal/commit/98bad32a89b1139cd
 
 See [commit](https://github.com/skagedal/jdtls-skagedal/commit/fd694681bfeb0a033d1cf9325a25dffaf0abb4b0).
 
+## Settings as JVM system properties
+
+Upstream, a preference is either a JVM system property or an LSP setting, and which one it is was decided by whoever added it. `java.import.generatesMetadataFilesAtProjectRoot` is a system property, read straight from `System.getProperty` by the filesystem bundle, and no client can set it over LSP. Everything else — `java.configuration.runtimes`, `java.format.settings.url`, `java.import.gradle.version` — is the other way round, settable only by a client that has somewhere to put LSP settings.
+
+That second group is the problem for clients that have nowhere. Claude Code runs a `jdtls` found on `PATH` and sends no settings at all, so those preferences sit at their defaults no matter what you want.
+
+This fork makes every preference key `Preferences` declares settable as a system property too, which means the config file above can carry any of them. A property wins over the same key sent by the client, so dotfile-managed configuration overrides per-editor configuration. Values are strings, coerced the same way LSP values already are; a value starting with `{` or `[` is parsed as JSON, so structured preferences work:
+
+```ini
+java.configuration.runtimes = [{"name": "JavaSE-26", "path": "/Library/Java/JavaVirtualMachines/zulu-26.jdk/Contents/Home", "default": true}]
+```
+
+Implemented as `SystemPropertyPreferences`, hooked in with one line in `Preferences.updateFrom` and one in the `PreferenceManager` constructor — the latter because a client sending no settings never reaches `updateFrom` otherwise. It generalises what two hand-written `System.getProperty` overrides in `Preferences` getters used to do for the Gradle APT paths; those are gone, so this fork's delta in `Preferences.java` is now purely additive.
+
 ## Expose quickassist as normal refactorings
 
 See [commit](https://github.com/skagedal/jdtls-skagedal/commit/5701dd9cf6ccad9cefa526809d6939f220648369).
@@ -53,7 +67,7 @@ which `getAllContainers()` undoes via a private `getReversed()`).
 
 # My configuration
 
-Given the above features, the following `~/.skagedal-tools/jdtls/config.ini` will make jdtls avoid putting any unwanted files in the project tree in Gradle projects, and instead put them in the `build/` directory (separated from other Gradle output)
+Given the above features, the following `~/.skagedal-tools/jdtls/config.ini` keeps unwanted files out of the project tree in Gradle projects, putting them in `build/` (separated from other Gradle output) instead, and gives clients with no LSP settings of their own the same configuration Zed gets.
 
 ```ini
 [system-properties]
@@ -65,7 +79,26 @@ java.import.generatesMetadataFilesAtProjectRoot = false
 # and into build/jdtls-generated/ — which is typically gitignored in Gradle projects.
 java.import.gradle.annotationProcessing.generatedSourcesDir = build/jdtls-generated/sources/annotations
 java.import.gradle.annotationProcessing.generatedTestSourcesDir = build/jdtls-generated/test-sources/annotations
+
+# The rest need "Settings as JVM system properties" above; they are ordinary LSP
+# settings that no -D could reach before.
+java.configuration.runtimes = [{"name": "JavaSE-26", "path": "/Library/Java/JavaVirtualMachines/zulu-26.jdk/Contents/Home", "default": true}]
+
+# Re-sync a project when its build files change. The default, "interactive", asks
+# the client first, and a client that does not surface the prompt leaves a stale
+# .classpath stale through every restart.
+java.configuration.updateBuildConfiguration = automatic
+
+# Fallback for project dirs with no Gradle wrapper of their own; the version
+# bundled with the Tooling API (8.9) no current JDK can run.
+java.import.gradle.version = 9.4.1
+
+# Use the repo's Eclipse formatter profile when it has one. Resolved per-project
+# against the workspace root; missing is not an error.
+java.format.settings.url = config/spotless/eclipse-formatter.xml
 ```
+
+This file is not the only way in — anything that can add JVM args works, e.g. `jdtls --jvm-arg=-Djava.import.gradle.version=9.4.1`. The file just means no client needs to.
 
 # Other issues (not fixed)
 
