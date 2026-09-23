@@ -43,17 +43,20 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -437,6 +440,17 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		assertHasErrors(project, "Preview features enabled at an invalid source release level");
+	}
+
+	@Test
+	public void testJava27Project() throws Exception {
+		IProject project = importMavenProject("salut-java27");
+		assertIsJavaProject(project);
+		assertEquals("27", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
 		assertNoErrors(project);
 	}
 
@@ -520,6 +534,22 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.one-my-app")));
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.two-my-app")));
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.three-my-app")));
+	}
+
+	@Test
+	public void testDuplicateGroupIdArtifactId() throws Exception {
+		JavaClientConnection javaClient = new JavaClientConnection(client);
+		JDTLanguageServer server = Mockito.mock(JDTLanguageServer.class);
+		Mockito.when(server.getClientConnection()).thenReturn(javaClient);
+		JavaLanguageServerPlugin.getInstance().setProtocol(server);
+		try {
+			importProjects("maven/multimodule-same-gav");
+			IProject[] projects = ProjectUtils.getAllProjects(false);
+			assertEquals(1, projects.length);
+			assertTrue(clientRequests.containsKey("showMessage"));
+		} finally {
+			JavaLanguageServerPlugin.getInstance().setProtocol(null);
+		}
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/3639
