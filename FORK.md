@@ -8,7 +8,7 @@ This is my fork of [eclipse.jdt.ls](https://github.com/eclipse-jdtls/eclipse.jdt
 
 Some things in jdtls are only configurable through Java system properties. These are possible to set when launching jdtls by adding -Dproperty=value to the JVM arguments, but that's not very convenient. The language server will often be launched by an editor, so either the editor needs to support adding JVM arguments, or the user needs to set up a wrapper script that adds the JVM arguments and then launches jdtls.
 
-This fork allows putting configuration in a file located at ~/.skagedal-tools/jdtls/config.ini. The configuration file is in INI format, and supports a `[system-properties]` section where Java system properties can be specified.
+This fork allows putting configuration in a file located at ~/.config/skagedal-tools/jdtls/config.ini. The configuration file is in INI format, and supports a `[system-properties]` section where Java system properties can be specified.
 
 See [commit](https://github.com/skagedal/jdtls-skagedal/commit/98bad32a89b1139cd897444b6447b091a9287c05).
 
@@ -67,7 +67,7 @@ which `getAllContainers()` undoes via a private `getReversed()`).
 
 # My configuration
 
-Given the above features, the following `~/.skagedal-tools/jdtls/config.ini` keeps unwanted files out of the project tree in Gradle projects, putting them in `build/` (separated from other Gradle output) instead, and gives clients with no LSP settings of their own the same configuration Zed gets.
+Given the above features, the following `~/.config/skagedal-tools/jdtls/config.ini` keeps unwanted files out of the project tree in Gradle projects, putting them in `build/` (separated from other Gradle output) instead, and gives clients with no LSP settings of their own the same configuration Zed gets.
 
 ```ini
 [system-properties]

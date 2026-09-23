@@ -82,13 +82,13 @@ def get_shared_config_path(jdtls_base_path):
 	return str(jdtls_base_path / config_dir)
 
 def load_config_system_properties():
-	"""Read [system-properties] from ~/.skagedal-tools/jdtls/config.ini.
+	"""Read [system-properties] from ~/.config/skagedal-tools/jdtls/config.ini.
 
 	Each key=value becomes a -Dkey=value JVM arg. Returns an empty list if
 	the file or section is absent, or if parsing fails (failures are logged
 	to stderr so LSP startup is never blocked by a malformed config).
 	"""
-	config_path = Path.home() / '.skagedal-tools' / 'jdtls' / 'config.ini'
+	config_path = Path.home() / '.config' / 'skagedal-tools' / 'jdtls' / 'config.ini'
 	if not config_path.is_file():
 		return []
 
