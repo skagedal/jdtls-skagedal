@@ -93,6 +93,12 @@ java.configuration.updateBuildConfiguration = automatic
 # bundled with the Tooling API (8.9) no current JDK can run.
 java.import.gradle.version = 9.4.1
 
+# Skip directories not worth importing as Java projects. A Flutter repo's
+# android/ is a Gradle project jdtls fails to import, and the attempt leaves an
+# android/build/reports/ behind in a tree that does not ignore it. Setting this
+# replaces the four defaults rather than adding to them, so they are repeated.
+java.import.exclusions = ["**/node_modules/**", "**/.metadata/**", "**/archetype-resources/**", "**/META-INF/maven/**", "**/android/**"]
+
 # Use the repo's Eclipse formatter profile when it has one. Resolved per-project
 # against the workspace root; missing is not an error.
 java.format.settings.url = config/spotless/eclipse-formatter.xml
