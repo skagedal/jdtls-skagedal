@@ -231,6 +231,13 @@ public class Preferences {
 	 * Default value for {@link #GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR}.
 	 */
 	public static final String GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR_DEFAULT = "bin/generated-test-sources/annotations";
+	 * Preference key for import mode: {@code "full"} (default) or {@code "ondemand"}.
+	 *
+	 * <p>In {@code "full"} mode, all projects are discovered and imported at startup.
+	 * In {@code "ondemand"} mode, projects are imported lazily when a file is opened.
+	 * See {@link ImportMode} for details.</p>
+	 */
+	public static final String IMPORT_MODE = "java.import.mode";
 	/**
 	 * Preference key to enable/disable maven importer.
 	 */
@@ -239,6 +246,10 @@ public class Preferences {
 	 * Preference key to enable/disable maven offline mode.
 	 */
 	public static final String IMPORT_MAVEN_OFFLINE = "java.import.maven.offline.enabled";
+	/**
+	 * Preference key for the Maven project name template.
+	 */
+	public static final String IMPORT_MAVEN_PROJECT_NAME_TEMPLATE = "java.import.maven.projectNameTemplate";
 
 	/**
 	 * Preference key to enable/disable maven test classpath flag.
@@ -690,8 +701,10 @@ public class Preferences {
 	private boolean gradleAnnotationProcessingEnabled;
 	private String gradleAnnotationProcessingGeneratedSourcesDir;
 	private String gradleAnnotationProcessingGeneratedTestSourcesDir;
+	private ImportMode importMode;
 	private boolean importMavenEnabled;
 	private boolean mavenOffline;
+	private String mavenProjectNameTemplate;
 	private boolean mavenDisableTestClasspathFlag;
 	private boolean mavenDownloadSources;
 	private boolean eclipseDownloadSources;
@@ -989,8 +1002,10 @@ public class Preferences {
 		gradleAnnotationProcessingEnabled = true;
 		gradleAnnotationProcessingGeneratedSourcesDir = GRADLE_ANNOTATION_PROCESSING_GENERATED_SOURCES_DIR_DEFAULT;
 		gradleAnnotationProcessingGeneratedTestSourcesDir = GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR_DEFAULT;
+		importMode = ImportMode.FULL;
 		importMavenEnabled = true;
 		mavenOffline = false;
+		mavenProjectNameTemplate = null;
 		mavenDisableTestClasspathFlag = false;
 		mavenDownloadSources = false;
 		eclipseDownloadSources = false;
@@ -1164,8 +1179,10 @@ public class Preferences {
 		prefs.gradleAnnotationProcessingEnabled = this.gradleAnnotationProcessingEnabled;
 		prefs.gradleAnnotationProcessingGeneratedSourcesDir = this.gradleAnnotationProcessingGeneratedSourcesDir;
 		prefs.gradleAnnotationProcessingGeneratedTestSourcesDir = this.gradleAnnotationProcessingGeneratedTestSourcesDir;
+		prefs.importMode = this.importMode;
 		prefs.importMavenEnabled = this.importMavenEnabled;
 		prefs.mavenOffline = this.mavenOffline;
+		prefs.mavenProjectNameTemplate = this.mavenProjectNameTemplate;
 		prefs.mavenDisableTestClasspathFlag = this.mavenDisableTestClasspathFlag;
 		prefs.mavenDownloadSources = this.mavenDownloadSources;
 		prefs.eclipseDownloadSources = this.eclipseDownloadSources;
@@ -1395,6 +1412,11 @@ public class Preferences {
 			prefs.setGradleAnnotationProcessingGeneratedTestSourcesDir(gradleAnnotationProcessingGeneratedTestSourcesDir);
 		}
 
+		if (containsKey(configuration, IMPORT_MODE)) {
+			String importMode = getString(configuration, IMPORT_MODE, existing.importMode.getValue());
+			prefs.setImportMode(ImportMode.fromString(importMode, existing.importMode));
+		}
+
 		if (containsKey(configuration, IMPORT_MAVEN_ENABLED)) {
 			boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, existing.importMavenEnabled);
 			prefs.setImportMavenEnabled(importMavenEnabled);
@@ -1403,6 +1425,11 @@ public class Preferences {
 		if (containsKey(configuration, IMPORT_MAVEN_OFFLINE)) {
 			boolean mavenOffline = getBoolean(configuration, IMPORT_MAVEN_OFFLINE, existing.mavenOffline);
 			prefs.setMavenOffline(mavenOffline);
+		}
+
+		if (containsKey(configuration, IMPORT_MAVEN_PROJECT_NAME_TEMPLATE)) {
+			String mavenProjectNameTemplate = getString(configuration, IMPORT_MAVEN_PROJECT_NAME_TEMPLATE);
+			prefs.setMavenProjectNameTemplate(mavenProjectNameTemplate);
 		}
 
 		if (containsKey(configuration, MAVEN_DISABLE_TEST_CLASSPATH_FLAG)) {
@@ -2243,6 +2270,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setMavenProjectNameTemplate(String mavenProjectNameTemplate) {
+		this.mavenProjectNameTemplate = mavenProjectNameTemplate;
+		return this;
+	}
+
 	public Preferences setMavenDisableTestClasspathFlag(boolean enabled) {
 		this.mavenDisableTestClasspathFlag = enabled;
 		return this;
@@ -2606,12 +2638,31 @@ public class Preferences {
 		return gradleWrapperEnabled;
 	}
 
+	/**
+	 * Returns the import mode ({@link ImportMode#FULL} or {@link ImportMode#ON_DEMAND}).
+	 */
+	public ImportMode getImportMode() {
+		return importMode;
+	}
+
+	/**
+	 * Sets the import mode.
+	 */
+	public Preferences setImportMode(ImportMode mode) {
+		this.importMode = mode;
+		return this;
+	}
+
 	public boolean isImportMavenEnabled() {
 		return importMavenEnabled;
 	}
 
 	public boolean isMavenOffline() {
 		return mavenOffline;
+	}
+
+	public String getMavenProjectNameTemplate() {
+		return mavenProjectNameTemplate;
 	}
 
 	public boolean isMavenDisableTestClasspathFlag() {

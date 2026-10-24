@@ -30,6 +30,7 @@ import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyItem;
@@ -114,13 +115,11 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
 		assertNotNull(calls);
-		assertEquals(4, calls.size());
+		assertEquals(3, calls.size());
 		assertItem(calls.get(2).getFrom(), "main(String[]) : void", Method, "org.sample.Call", false, 7);
-		assertItem(calls.get(3).getFrom(), "main(String[]) : void", Method, "org.sample.Call", false, 10);
 		Range selectionRange = calls.get(2).getFrom().getSelectionRange();
 		assertEquals(new Range(new Position(7, 18), new Position(7, 30)), selectionRange);
-		selectionRange = calls.get(3).getFrom().getSelectionRange();
-		assertEquals(new Range(new Position(10, 18), new Position(10, 30)), selectionRange);
+		assertEquals(2, calls.get(2).getFromRanges().size());
 	}
 
 	@Test
@@ -164,7 +163,8 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyIncomingCall> call0Calls = getIncomingCalls(calls.get(0).getFrom());
 		assertNotNull(call0Calls);
-		assertEquals(3, call0Calls.size());
+		assertEquals(1, call0Calls.size());
+		assertEquals(3, call0Calls.get(0).getFromRanges().size());
 		assertItem(call0Calls.get(0).getFrom(), "{...}", Constructor, "org.sample.CallHierarchyOther", false, 5);
 	}
 
@@ -193,6 +193,70 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(jarUri.startsWith("jdt://"));
 		assertTrue(jarUri.contains("org.apache.commons.lang3.text/WordUtils.java?"));
 		assertTrue(jarUri.contains("org.apache.commons.lang3.text%28WordUtils.class"));
+	}
+
+	@Test
+	public void incomingCalls_projectOnly() throws Exception {
+		// Line 16 from `CallHierarchy`
+		//      WordUtils.<|>capitalize("a");
+		String uri = getUriFromJarProject("org.sample.CallHierarchy");
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 15, 18);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		CallHierarchyItem capitalize = assertItem(items.get(0), "capitalize(String)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 61);
+		CallHierarchyItem capitalizeWithDelimiters = getOutgoings(capitalize).get(0).getTo();
+
+		// The library's sources are attached, so the default scope finds its own callers too
+		List<CallHierarchyIncomingCall> calls = getIncomingCalls(capitalizeWithDelimiters);
+		assertNotNull(calls);
+		assertTrue(calls.stream().anyMatch(call -> call.getFrom().getUri().startsWith("jdt://")));
+
+		SearchScope searchScope = preferences.getSearchScope();
+		try {
+			preferences.setSearchScope(SearchScope.projectOnly);
+			calls = getIncomingCalls(capitalizeWithDelimiters);
+			assertNotNull(calls);
+			assertEquals(0, calls.size());
+
+			calls = getIncomingCalls(capitalize);
+			assertNotNull(calls);
+			assertEquals(1, calls.size());
+			assertItem(calls.get(0).getFrom(), "build()" + JavaElementLabelsCore.DECL_STRING + "Object", Method, "org.sample.CallHierarchy$FooBuilder", false, 15);
+			assertTrue(calls.get(0).getFrom().getUri().startsWith("file:"));
+		} finally {
+			preferences.setSearchScope(searchScope);
+		}
+	}
+
+	@Test
+	public void incomingCalls_searchScopeChanged() throws Exception {
+		// Line 16 from `CallHierarchy`
+		//      WordUtils.<|>capitalize("a");
+		String uri = getUriFromJarProject("org.sample.CallHierarchy");
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 15, 18);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		CallHierarchyItem capitalizeWithDelimiters = getOutgoings(items.get(0)).get(0).getTo();
+		CallHierarchyItem isDelimiter = getOutgoings(capitalizeWithDelimiters).stream().map(CallHierarchyOutgoingCall::getTo).filter(item -> item.getName().startsWith("isDelimiter(")).findFirst().orElseThrow();
+
+		// capitalize(String, char...) is now one of the callers already found, and so are its own callers
+		assertTrue(getIncomingCalls(isDelimiter).stream().anyMatch(call -> call.getFrom().getName().equals(capitalizeWithDelimiters.getName())));
+		assertTrue(getIncomingCalls(capitalizeWithDelimiters).stream().anyMatch(call -> call.getFrom().getUri().startsWith("jdt://")));
+
+		SearchScope searchScope = preferences.getSearchScope();
+		try {
+			preferences.setSearchScope(SearchScope.projectOnly);
+			List<CallHierarchyIncomingCall> calls = getIncomingCalls(capitalizeWithDelimiters);
+			assertNotNull(calls);
+			assertEquals(0, calls.size());
+
+			preferences.setSearchScope(SearchScope.main);
+			calls = getIncomingCalls(capitalizeWithDelimiters);
+			assertNotNull(calls);
+			assertTrue(calls.stream().anyMatch(call -> call.getFrom().getUri().startsWith("jdt://")));
+		} finally {
+			preferences.setSearchScope(searchScope);
+		}
 	}
 
 	@Test

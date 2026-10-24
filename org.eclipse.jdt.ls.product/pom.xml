@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<version>1.62.0-SNAPSHOT</version>
+		<version>1.64.0-SNAPSHOT</version>
 		<groupId>org.eclipse.jdt.ls</groupId>
 		<artifactId>parent</artifactId>
 	</parent>
@@ -136,6 +136,36 @@
 						</goals>
 						<configuration>
 							<outputDirectory>${project.build.directory}/repository/config_linux_arm</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/languageServer.product/linux/gtk/aarch64/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-unix</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_unix</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/languageServer.product/linux/gtk/x86_64/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-unix-arm</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_unix_arm</outputDirectory>
 							<resources>
 								<resource>
 									<directory>${basedir}/target/products/languageServer.product/linux/gtk/aarch64/configuration</directory>

@@ -6,14 +6,14 @@
 	<parent>
 		<groupId>org.eclipse.jdt.ls</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.62.0-SNAPSHOT</version>
+		<version>1.64.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>org.eclipse.jdt.ls.tests.lombok</artifactId>
 	<name>${base.name} :: Lombok Tests</name>
 	<packaging>eclipse-test-plugin</packaging>
 
 	<properties>
-		<lombok.version>1.18.36</lombok.version>
+		<lombok.version>1.18.48</lombok.version>
 	</properties>
 
 	<build>
@@ -26,7 +26,7 @@
 						<artifactItem>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-							<version>1.18.36</version>
+							<version>${lombok.version}</version>
 						</artifactItem>
 					</artifactItems>
 				</configuration>
@@ -39,7 +39,7 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs} "-javaagent:${basedir}/lib/lombok-${lombok.version}.jar"</argLine>
+						<argLine>-Dguice_custom_class_loading=CHILD ${tycho.testArgLine} ${os.testArgs} "-javaagent:${basedir}/lib/lombok-${lombok.version}.jar"</argLine>
 						<runOrder>random</runOrder>
 					</configuration>
 				</plugin>
