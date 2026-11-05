@@ -65,6 +65,15 @@ to the *head* of the path (it shares `FactoryPath.internalAdd` with
 `addEntryToHead`, and `FactoryPath` stores `_path` in reverse of path order,
 which `getAllContainers()` undoes via a private `getReversed()`).
 
+## Fail the build on compile errors
+
+The root `pom.xml` passed `-proceedOnError` to ECJ, which compiles a file with
+errors into classes that throw `Unresolved compilation problems` when loaded.
+The build succeeds, and the language server dies at startup — in Zed, as
+"Server reset the connection". A bad merge of upstream shipped that way. The
+flag came in with the javac-as-compiler support (#3167) and outlived its
+removal; this fork drops it.
+
 # My configuration
 
 Given the above features, the following `~/.config/skagedal-tools/jdtls/config.ini` keeps unwanted files out of the project tree in Gradle projects, putting them in `build/` (separated from other Gradle output) instead, and gives clients with no LSP settings of their own the same configuration Zed gets.

@@ -219,7 +219,6 @@
 							<args>-enableJavadoc</args>
 							<args>-encoding</args>
 							<args>${project.build.sourceEncoding}</args>
-							<args>-proceedOnError</args>
 						</compilerArgs>
 						<log>xml</log>
 						<logDirectory>${compileLogDir}</logDirectory>
