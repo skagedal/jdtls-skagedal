@@ -231,6 +231,7 @@ public class Preferences {
 	 * Default value for {@link #GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR}.
 	 */
 	public static final String GRADLE_ANNOTATION_PROCESSING_GENERATED_TEST_SOURCES_DIR_DEFAULT = "bin/generated-test-sources/annotations";
+	/**
 	 * Preference key for import mode: {@code "full"} (default) or {@code "ondemand"}.
 	 *
 	 * <p>In {@code "full"} mode, all projects are discovered and imported at startup.
